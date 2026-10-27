@@ -1,0 +1,28 @@
+﻿identity:
+  author: browser-act
+  name: browseract
+  label:
+    en_US: BrowserAct
+    zh_Hans: BrowserAct
+  description:
+    en_US: Browser automation with published Bots and official templates.
+    zh_Hans: Browser automation with published Bots and official templates.
+  icon: icon.svg
+  tags:
+    - utilities
+credentials_for_provider:
+  api_key:
+    type: secret-input
+    required: true
+    label:
+      en_US: BrowserAct API Key
+      zh_Hans: BrowserAct API Key
+    help:
+      en_US: Use the API Key from your BrowserAct account.
+      zh_Hans: Use the API Key from your BrowserAct account.
+tools:
+  - tools/run_my_bot.yaml
+  - tools/run_official_template.yaml
+extra:
+  python:
+    source: provider/browseract.py

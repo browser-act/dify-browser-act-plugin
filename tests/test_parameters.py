@@ -1,0 +1,90 @@
+from copy import deepcopy
+import json
+import pytest
+
+from browseract import parameters
+from browseract.errors import BrowserActError
+
+
+def test_overrides_merge_objects_replace_arrays_preserve_falsy_values_and_do_not_mutate_defaults():
+    schema = {"type": "object", "properties": {
+        "filters": {"type": "object", "default": {
+            "country": "US", "limit": 10, "tags": ["a"], "nested": {"kept": 1},
+        }},
+        "zero": {"type": "integer", "default": 1},
+        "flag": {"type": "boolean", "default": True},
+        "empty": {"type": "string", "default": "value"},
+        "nullable": {"type": ["string", "null"], "default": "value"},
+    }}
+    before = deepcopy(schema)
+    raw = json.dumps({
+        "filters": {"limit": 20, "tags": ["b"], "nested": {}},
+        "zero": 0, "flag": False, "empty": "", "nullable": None,
+    })
+
+    actual = parameters.prepare_inputs(schema, raw)
+
+    assert actual == {
+        "filters": {"country": "US", "limit": 20, "tags": ["b"], "nested": {"kept": 1}},
+        "zero": 0, "flag": False, "empty": "", "nullable": None,
+    }
+    actual["filters"]["nested"]["kept"] = 2
+    assert schema == before
+
+
+@pytest.mark.parametrize(("raw", "expected"), [
+    ('{"text":"","json":[{"value":0}],"files":[]}', {"value": 0}),
+    ('{"json":[{"value":1}]}', {"json": [{"value": 1}]}),
+    ('{"text":"","json":[{}],"files":[],"other":1}',
+     {"text": "", "json": [{}], "files": [], "other": 1}),
+    ('{"text":"","json":[{"text":"business","json":[{"x":1}],"files":[]}],"files":[]}',
+     {"text": "business", "json": [{"x": 1}], "files": []}),
+    ("", {}), (None, {}),
+])
+def test_config_accepts_direct_object_or_exactly_one_dify_wrapper(raw, expected):
+    assert parameters.prepare_inputs({}, raw) == expected
+
+
+@pytest.mark.parametrize("raw", [
+    '{"text":"","json":[],"files":[]}',
+    '{"text":"","json":[{},{}],"files":[]}',
+    '{"text":"","json":[1],"files":[]}',
+    '{"text":1,"json":[{}],"files":[]}',
+    '{"text":"","json":[{}],"files":{}}',
+    "[]", '"string"', "null", "{", '{"n":NaN}', '{"n":Infinity}',
+])
+def test_malformed_config_is_a_clear_error_instead_of_silent_defaults(raw):
+    with pytest.raises(BrowserActError, match="JSON"):
+        parameters.prepare_inputs({}, raw)
+
+
+@pytest.mark.parametrize(("schema", "raw", "path"), [
+    ({"properties": {"count": {"type": "integer"}}}, '{"count":"private-value"}', "input/count"),
+    ({"required": ["count"]}, "{}", "input/count"),
+    ({"properties": {"filters": {"properties": {"limit": {"maximum": 10}}}}},
+     '{"filters":{"limit":20}}', "input/filters/limit"),
+    ({"additionalProperties": False}, '{"extra":1}', "input"),
+    ({"properties": {"choice": {"oneOf": [{"enum": ["A"]}, {"enum": ["B"]}]}}},
+     '{"choice":"C"}', "input/choice"),
+    ({"$defs": {"count": {"type": "integer", "minimum": 1}},
+      "properties": {"count": {"$ref": "#/$defs/count"}}}, '{"count":0}', "input/count"),
+])
+def test_final_merged_configuration_is_validated_and_reports_field_path(schema, raw, path):
+    with pytest.raises(BrowserActError, match=path) as caught:
+        parameters.prepare_inputs(schema, raw)
+    assert "private-value" not in str(caught.value)
+
+
+def test_external_schema_references_are_rejected_without_network_requests(http_api):
+    _, calls = http_api
+    schema = {"properties": {"x": {"$ref": "https://invalid.example/remote-schema"}}}
+    with pytest.raises(BrowserActError, match="reference"):
+        parameters.prepare_inputs(schema, '{"x":1}')
+    assert calls == []
+
+
+def test_object_union_schema_accepts_object_config_without_changing_null_fields():
+    schema = {"type": ["object", "null"], "properties": {
+        "value": {"type": ["string", "null"], "default": "default"},
+    }}
+    assert parameters.prepare_inputs(schema, '{"value":null}') == {"value": None}

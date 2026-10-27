@@ -1,0 +1,293 @@
+﻿identity:
+  name: run_my_bot
+  author: browser-act
+  label:
+    en_US: Run My Bot
+    zh_Hans: Run My Bot
+description:
+  human:
+    en_US: View default inputs or run one of your published BrowserAct Bots.
+    zh_Hans: View default inputs or run one of your published BrowserAct Bots.
+  llm: View default inputs or synchronously run a published BrowserAct Bot.
+parameters:
+  - name: operation
+    type: select
+    form: llm
+    required: true
+    default: run
+    label:
+      en_US: Operation
+      zh_Hans: Operation
+    human_description:
+      en_US: Choose View Parameters to inspect defaults, or Run Bot to execute.
+      zh_Hans: Choose View Parameters to inspect defaults, or Run Bot to execute.
+    llm_description: Choose view to inspect default inputs, or run to create a task and wait for results. Defaults to run.
+    options:
+      - value: run
+        label:
+          en_US: Run Bot
+          zh_Hans: Run Bot
+      - value: view
+        label:
+          en_US: View Parameters
+          zh_Hans: View Parameters
+  - name: bot_id
+    type: dynamic-select
+    form: llm
+    required: true
+    label:
+      en_US: Bot
+      zh_Hans: Bot
+    human_description:
+      en_US: Select one of your custom Bots.
+      zh_Hans: Select one of your custom Bots.
+  - name: timeout
+    type: number
+    form: form
+    required: false
+    default: 600
+    label:
+      en_US: Wait Timeout (seconds)
+      zh_Hans: Wait Timeout (seconds)
+    human_description:
+      en_US: Positive integer, required when running. On timeout, the plugin stops waiting and sends no cancellation request. The server may cancel the task after its heartbeat expires.
+      zh_Hans: Positive integer, required when running. On timeout, the plugin stops waiting and sends no cancellation request. The server may cancel the task after its heartbeat expires.
+  - name: input_json
+    type: string
+    form: llm
+    required: false
+    default: "{}"
+    label:
+      en_US: Custom Parameters JSON
+      zh_Hans: Custom Parameters JSON
+    human_description:
+      en_US: Select a Bot or template, then choose View Parameters to inspect its inputs. For setup and usage instructions, see https://docs.browseract.com/integrations/integration-overview
+      zh_Hans: Select a Bot or template, then choose View Parameters to inspect its inputs. For setup and usage instructions, see https://docs.browseract.com/integrations/integration-overview
+    llm_description: A JSON string containing parameter overrides or the full Dify output from View Parameters.
+extra:
+  python:
+    source: tools/run_my_bot.py
+
+output_schema:
+  type: object
+  properties:
+    task_id:
+      type: string
+      description: Task ID
+    log_detail_url:
+      type: string
+      format: uri
+      description: URL to detailed execution logs for this task.
+    bot_id:
+      type: string
+      description: Public bot identifier used by a normal Bot run.
+    bot_type:
+      type: string
+      enum:
+      - workflow
+      - agent
+      description: Public bot type.
+    bot_name:
+      type: string
+      description: Bot display name when available for a normal Bot run.
+    status:
+      type: string
+      enum:
+      - created
+      - running
+      - finished
+      - canceled
+      - pausing
+      - paused
+      - failed
+      description: Public lifecycle status of a bot run.
+    created_at:
+      type: string
+      format: date-time
+      description: Task creation time
+    finished_at:
+      type: string
+      format: date-time
+      description: Task finish time (if ended)
+    input:
+      type: object
+      additionalProperties: true
+      description: Input object accepted for this run.
+    task_failure_info:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: Error code
+        message:
+          type: string
+          description: Error message
+    output:
+      description: Business result in its original JSON type; Bot-specific child fields
+        are not fixed. Use the complete json output if a downstream node requires
+        a specific type.
+    output_files:
+      type: object
+      additionalProperties: true
+      description: Business result files keyed by format, for example json, md, csv
+        or xml. Each file is limited to 100 MB.
+      properties:
+        csv:
+          type: object
+          properties:
+            file_name:
+              type: string
+              description: Business result file name.
+            file_size:
+              type: integer
+              format: int64
+              description: Business result file size in bytes when available.
+            download_url:
+              type: string
+              description: Temporary URL for downloading the business result file.
+        json:
+          type: object
+          properties:
+            file_name:
+              type: string
+              description: Business result file name.
+            file_size:
+              type: integer
+              format: int64
+              description: Business result file size in bytes when available.
+            download_url:
+              type: string
+              description: Temporary URL for downloading the business result file.
+        markdown:
+          type: object
+          properties:
+            file_name:
+              type: string
+              description: Business result file name.
+            file_size:
+              type: integer
+              format: int64
+              description: Business result file size in bytes when available.
+            download_url:
+              type: string
+              description: Temporary URL for downloading the business result file.
+        md:
+          type: object
+          properties:
+            file_name:
+              type: string
+              description: Business result file name.
+            file_size:
+              type: integer
+              format: int64
+              description: Business result file size in bytes when available.
+            download_url:
+              type: string
+              description: Temporary URL for downloading the business result file.
+        xml:
+          type: object
+          properties:
+            file_name:
+              type: string
+              description: Business result file name.
+            file_size:
+              type: integer
+              format: int64
+              description: Business result file size in bytes when available.
+            download_url:
+              type: string
+              description: Temporary URL for downloading the business result file.
+    download_files:
+      type: array
+      items:
+        type: object
+        properties:
+          guid:
+            type: string
+            description: File unique identifier
+          file_name:
+            type: string
+            description: Display file name.
+          file_size:
+            type: integer
+            format: int64
+            description: File size in bytes.
+          status:
+            type: string
+            description: File status (value may vary)
+          progress:
+            type: integer
+            description: Download progress (0-100)
+          download_url:
+            type: string
+            description: Temporary download URL, available after upload completes.
+          download_start_time:
+            type: integer
+            format: int64
+            description: Download start time in epoch milliseconds.
+          download_completed_time:
+            type: integer
+            format: int64
+            description: Download completion time in epoch milliseconds.
+          expires_at:
+            type: integer
+            format: int64
+            description: Download expiration time in epoch milliseconds.
+          error_message:
+            type: string
+            description: Failure or cancellation message when file transfer does not
+              complete.
+          create_time:
+            type: integer
+            format: int64
+            description: File record creation time in epoch milliseconds.
+      description: Files generated by the task (if any).
+    files_expires_at:
+      type: integer
+      format: int64
+      description: Expiration timestamp for download files.
+    steps:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: string
+            description: Step ID
+          step:
+            type: integer
+            description: Step sequence number
+          evaluation_previous_goal:
+            type: string
+            description: Evaluation result of the previous step
+          step_goal:
+            type: string
+            description: Goal of the current step
+          screenshots_url:
+            type: string
+            description: Screenshot URL captured during this step
+          status:
+            type: string
+            enum:
+            - running
+            - succeed
+            - failed
+            description: Enumeration of possible task step states.
+      description: Steps executed within the task.
+    live_url_info:
+      type: object
+      properties:
+        live_url:
+          type: string
+          description: Live view URL. Can be embedded in an `<iframe>`.
+        width:
+          type: integer
+          description: Viewport width
+        height:
+          type: integer
+          description: Viewport height
+      description: Present only when the task is `running`.
+    credit:
+      type: integer
+      format: int64
+      description: Credits consumed by this task.

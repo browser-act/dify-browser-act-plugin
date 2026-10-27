@@ -1,0 +1,17 @@
+.git
+.git/**
+.gitignore
+.tools/
+.venv/
+.env
+.env.*
+__pycache__/
+*.pyc
+.pytest_cache/
+tests/
+scripts/
+docs/
+dist/
+*.difypkg
+AGENTS.md
+agent.md
