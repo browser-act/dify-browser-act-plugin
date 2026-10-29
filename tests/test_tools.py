@@ -23,6 +23,15 @@ def test_view_returns_only_one_native_json_message_and_ignores_run_settings(
                 "zero": {"default": 0}, "flag": {"default": False},
                 "empty": {"default": ""}, "null": {"default": None},
                 "missing": {"type": "string"},
+                "keyword": {"type": "string", "minLength": 1},
+                "count": {"type": "integer", "default": 3},
+                "integer": {"type": "integer", "minimum": 1},
+                "number": {"type": "number"},
+                "boolean": {"type": "boolean"},
+                "array": {"type": "array", "items": {"type": "string"}},
+                "object": {"type": "object", "properties": {"child": {"type": "string"}}},
+                "nullable": {"type": ["null", "string"]},
+                "unknown": {}, "allowed": True, "disallowed": False,
             },
             "required": ["missing"],
         },
@@ -36,6 +45,9 @@ def test_view_returns_only_one_native_json_message_and_ignores_run_settings(
     assert messages[0].type.value == "json"
     assert messages[0].message.json_object == {
         "URL": "https://example.com", "zero": 0, "flag": False, "empty": "", "null": None,
+        "missing": "", "keyword": "", "count": 3, "integer": 0, "number": 0,
+        "boolean": False, "array": [], "object": {}, "nullable": "",
+        "unknown": None, "allowed": None, "disallowed": None,
     }
     assert [(call["method"], call["url"]) for call in calls] == [
         ("GET", "https://api.browseract.com" + path)
@@ -77,14 +89,59 @@ def test_invalid_operation_is_rejected_without_api_requests(http_api):
     assert calls == []
 
 
-def test_valid_schema_without_explicit_defaults_returns_empty_config(http_api):
+def test_valid_schema_without_explicit_defaults_lists_all_parameters(http_api):
     reply, _ = http_api
     reply({"bot_id": "1", "input_schema": {"required": ["must_fill"], "properties": {
         "must_fill": {"type": "string"},
         "parent": {"type": "object", "properties": {"child": {"default": 1}}},
     }}})
     messages = list(RunMyBotTool.from_credentials({"api_key": "unit-test-key"}).invoke({"bot_id": "1", "operation": "view"}))
+    assert messages[0].message.json_object == {"must_fill": "", "parent": {}}
+
+
+def test_view_without_properties_still_returns_empty_config(http_api):
+    reply, calls = http_api
+    reply({"bot_id": "1", "input_schema": {"type": "object"}})
+    messages = list(RunMyBotTool.from_credentials({"api_key": "unit-test-key"}).invoke({
+        "bot_id": "1", "operation": "view",
+    }))
     assert messages[0].message.json_object == {}
+    assert [call["method"] for call in calls] == ["GET"]
+
+
+@pytest.mark.parametrize(("tool", "target"), [
+    (RunMyBotTool, "bot_id"), (RunOfficialTemplateTool, "template_id"),
+])
+def test_copied_view_requires_keyword_to_be_filled_before_run(http_api, tool, target):
+    import json
+
+    reply, calls = http_api
+    definition = {target: "1", "published_at": "2026-10-27", "input_schema": {
+        "type": "object", "required": ["keyword"], "properties": {
+            "keyword": {"type": "string", "minLength": 1},
+            "count": {"type": "integer", "default": 3, "minimum": 1},
+        },
+    }}
+    instance = tool.from_credentials({"api_key": "unit-test-key"})
+    reply(definition)
+    config = list(instance.invoke({target: "1", "operation": "view"}))[0].message.json_object
+    assert config == {"keyword": "", "count": 3}
+    reply(definition)
+    with pytest.raises(BrowserActError, match="input/keyword.*minLength"):
+        list(instance.invoke({target: "1", "input_json": json.dumps(config)}))
+    assert [call["method"] for call in calls] == ["GET", "GET"]
+
+    config["keyword"] = "handmade mug"
+    reply(definition)
+    reply({"task_id": "10", "status": "created"})
+    reply({"task_id": "10", "status": "finished"})
+    reply({"task_id": "10", "status": "finished"})
+    list(instance.invoke({target: "1", "input_json": json.dumps({
+        "text": "", "json": [config], "files": [],
+    })}))
+    posts = [call for call in calls if call["method"] == "POST"]
+    assert len(posts) == 1
+    assert json.loads(posts[0]["body"]) == {"input": {"keyword": "handmade mug", "count": 3}}
 
 
 @pytest.mark.parametrize("target", [None, 1, "../1", "1?extra=2"])

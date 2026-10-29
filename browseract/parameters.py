@@ -40,6 +40,26 @@ def default_inputs(schema: dict) -> dict:
     }
 
 
+def input_template(schema: dict) -> dict:
+    """List every input, using type placeholders only for the view operation."""
+    template = {}
+    for name, definition in schema.get("properties", {}).items():
+        if not isinstance(definition, dict):
+            template[name] = None
+            continue
+        if "default" in definition:
+            template[name] = deepcopy(definition["default"])
+            continue
+        field_type = definition.get("type")
+        if isinstance(field_type, list):
+            field_type = next((item for item in field_type if item != "null"), "null")
+        template[name] = {
+            "string": "", "integer": 0, "number": 0, "boolean": False,
+            "array": [], "object": {},
+        }.get(field_type)
+    return template
+
+
 def merge_objects(defaults: dict, overrides: dict) -> dict:
     merged = deepcopy(defaults)
     for name, value in overrides.items():

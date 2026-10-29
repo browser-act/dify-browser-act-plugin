@@ -1,5 +1,5 @@
 from browseract.errors import BrowserActError
-from browseract.parameters import default_inputs, input_schema, prepare_inputs
+from browseract.parameters import input_schema, input_template, prepare_inputs
 from browseract.runner import run_bot, validate_timeout
 
 
@@ -14,7 +14,7 @@ def invoke_bot(client, source: str, parameters: dict) -> dict:
     detail = client.get_definition(source, parameters.get(target_field))
     schema = input_schema(detail)
     if operation == "view":
-        return default_inputs(schema)
+        return input_template(schema)
     inputs = prepare_inputs(schema, parameters.get("input_json", "{}"))
     timeout = validate_timeout(parameters.get("timeout", 600))
     if source == "bot" and not detail.get("published_at"):

@@ -6,6 +6,18 @@ from browseract import parameters
 from browseract.errors import BrowserActError
 
 
+def test_run_does_not_fill_optional_parameters_with_view_placeholders():
+    schema = {"type": "object", "properties": {
+        "keyword": {"type": "string", "minLength": 1},
+        "count": {"type": "integer", "minimum": 1},
+        "limit": {"type": "integer", "default": 3},
+    }}
+    assert parameters.prepare_inputs(schema, "{}") == {"limit": 3}
+    schema["required"] = ["keyword"]
+    with pytest.raises(BrowserActError, match="input/keyword.*required"):
+        parameters.prepare_inputs(schema, "{}")
+
+
 def test_overrides_merge_objects_replace_arrays_preserve_falsy_values_and_do_not_mutate_defaults():
     schema = {"type": "object", "properties": {
         "filters": {"type": "object", "default": {

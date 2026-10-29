@@ -52,6 +52,14 @@ does not start a task.
 3. Paste it into **Custom Parameters JSON** and edit the values inside `json[0]`.
 4. Switch **Operation** back to `Run Bot` or `Run Template`.
 
+`View Parameters` lists every field in `input_schema.properties`. Explicit
+defaults are preserved. Fields without defaults use editable placeholders:
+strings `""`, numbers `0`, booleans `false`, arrays `[]`, and objects `{}`.
+Nullable types use the first declared non-null type; fields without a known
+type use `null`. Fill in the placeholders before running; they may not meet
+constraints such as minimum length or allowed values. Omit optional fields you
+do not want to send. The run mode only fills explicit defaults automatically.
+
 Objects merge recursively and arrays are replaced. Explicit `false`, `0` and
 empty strings are kept. Inputs are validated against the Bot's input schema
 before the task is created.

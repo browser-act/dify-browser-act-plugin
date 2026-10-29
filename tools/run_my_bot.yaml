@@ -19,9 +19,9 @@ parameters:
       en_US: Operation
       zh_Hans: Operation
     human_description:
-      en_US: Choose View Parameters to inspect defaults, or Run Bot to execute.
-      zh_Hans: Choose View Parameters to inspect defaults, or Run Bot to execute.
-    llm_description: Choose view to inspect default inputs, or run to create a task and wait for results. Defaults to run.
+      en_US: Choose View Parameters to inspect inputs, or Run Bot to execute.
+      zh_Hans: Choose View Parameters to inspect inputs, or Run Bot to execute.
+    llm_description: Choose view to inspect all input fields with defaults or type placeholders, or run to create a task and wait for results. Defaults to run.
     options:
       - value: run
         label:
