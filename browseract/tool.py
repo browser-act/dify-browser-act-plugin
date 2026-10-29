@@ -6,7 +6,7 @@ from browseract.runner import run_bot, validate_timeout
 def invoke_bot(client, source: str, parameters: dict) -> dict:
     operation = parameters.get("operation", "run")
     if operation not in ("view", "run"):
-        raise BrowserActError("Operation must be View Parameters or Run Bot.")
+        raise BrowserActError("Operation must be View Parameters or Run.")
     if source == "bot":
         target_field = "bot_id"
     else:

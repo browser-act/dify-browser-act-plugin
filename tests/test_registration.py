@@ -44,6 +44,10 @@ def test_registered_inputs_default_to_run_without_proxy_region(
     assert visible_inputs[0] == "operation"
     assert visible_inputs.index("operation") < visible_inputs.index(target)
     assert [option.value for option in parameters["operation"].options] == ["run", "view"]
+    labels = {option.value: option.label.en_us for option in parameters["operation"].options}
+    expected_run_label = "Run Template" if tool_name == "run_official_template" else "Run Bot"
+    assert labels["run"] == expected_run_label
+    assert labels["view"] == "View Parameters"
     assert parameters[target].type == "dynamic-select"
     # Workflow passes the provider/tool context only to input-variable controls.
     # A form-section dynamic select stays empty without calling the SDK hook.

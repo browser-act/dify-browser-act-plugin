@@ -1,6 +1,6 @@
 # BrowserAct for Dify: Data Handling
 
-Updated: 2026-10-27. This notice describes version 0.0.9 of the plugin. It
+Updated: 2026-10-27. This notice describes version 1.0.0 of the plugin. It
 covers the plugin code, not the separate Dify and BrowserAct services.
 
 ## Credentials and destinations

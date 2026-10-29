@@ -88,3 +88,36 @@ def test_object_union_schema_accepts_object_config_without_changing_null_fields(
         "value": {"type": ["string", "null"], "default": "default"},
     }}
     assert parameters.prepare_inputs(schema, '{"value":null}') == {"value": None}
+
+
+@pytest.mark.parametrize(("raw", "expected"), [
+    # Copying the rendered output can replace the indent spaces with NBSP.
+    ('{\n\u00a0 "keyword": "elden ring",\n\u00a0 "result_count": 3\n}',
+     {"keyword": "elden ring", "result_count": 3}),
+    # Some input methods and rich-text pastes use an ideographic space.
+    ('{\u3000"keyword"\u3000:\u3000"elden ring"\u3000}', {"keyword": "elden ring"}),
+    # Full-width punctuation looks like JSON but is not accepted by json.loads.
+    ('｛＂keyword＂：＂elden ring＂，＂result_count＂：3｝',
+     {"keyword": "elden ring", "result_count": 3}),
+    # A word processor in the path turns the delimiters into curly quotes.
+    ('{\u201ckeyword\u201d: \u201celden ring\u201d}', {"keyword": "elden ring"}),
+])
+def test_pasted_lookalike_characters_are_repaired(raw, expected):
+    assert parameters.prepare_inputs({}, raw) == expected
+
+
+def test_pasted_wrapper_with_invisible_spaces_still_extracts_the_single_configuration():
+    raw = ('{\n\u00a0 "files": [],\n\u00a0 "json": [\n\u00a0\u00a0\u00a0 {\n'
+           '\u00a0\u00a0\u00a0\u00a0 "keyword": "elden ring"\n\u00a0\u00a0\u00a0 }\n'
+           '\u00a0 ],\n\u00a0 "text": ""\n}')
+    assert parameters.prepare_inputs({}, raw) == {"keyword": "elden ring"}
+
+
+def test_repair_leaves_characters_inside_string_values_untouched():
+    note = "全角，标点：与＂引号＂和\u00a0空格"
+    raw = '{\n\u00a0 "note": "' + note + '"\n}'
+    assert parameters.prepare_inputs({}, raw) == {"note": note}
+
+
+def test_valid_config_still_parses_without_repair():
+    assert parameters.prepare_inputs({}, '{"note":"全角，标点"}') == {"note": "全角，标点"}

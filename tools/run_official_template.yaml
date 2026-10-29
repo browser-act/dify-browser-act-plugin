@@ -1,4 +1,4 @@
-﻿identity:
+identity:
   name: run_official_template
   author: browser-act
   label:
@@ -19,14 +19,14 @@ parameters:
       en_US: Operation
       zh_Hans: Operation
     human_description:
-      en_US: Choose View Parameters to inspect defaults, or Run Bot to execute.
-      zh_Hans: Choose View Parameters to inspect defaults, or Run Bot to execute.
+      en_US: Choose View Parameters to inspect defaults, or Run Template to execute.
+      zh_Hans: Choose View Parameters to inspect defaults, or Run Template to execute.
     llm_description: Choose view to inspect default inputs, or run to create a task and wait for results. Defaults to run.
     options:
       - value: run
         label:
-          en_US: Run Bot
-          zh_Hans: Run Bot
+          en_US: Run Template
+          zh_Hans: Run Template
       - value: view
         label:
           en_US: View Parameters

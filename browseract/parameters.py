@@ -73,12 +73,69 @@ def _reject_constant(value):
     raise ValueError("Non-finite JSON number")
 
 
+# Copying the rendered output of a node can replace the indent spaces with NBSP,
+# an input method can insert an ideographic space, and a word processor between
+# two pastes turns the delimiters into full-width or curly characters. All of
+# them read like JSON but are rejected by json.loads.
+_QUOTE_PAIRS = {'"': '"', "＂": "＂", "“": "”"}
+_LOOKALIKES = {"，": ",", "：": ":", "｛": "{", "｝": "}", "［": "[", "］": "]"}
+_SPACES = frozenset(
+    "\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a"
+    "\u202f\u205f\u3000"
+)
+_INVISIBLE = frozenset("\ufeff\u200b\u200c\u200d\u2060")
+
+
+def _repair_pasted_json(text: str) -> str:
+    """Map pasted lookalike characters onto the JSON syntax they stand for.
+
+    Only the repaired text is parsed, and only after the strict parse failed;
+    characters inside a string value are left untouched.
+    """
+    repaired = []
+    opening = None
+    escaped = False
+    for character in text:
+        if opening is not None:
+            if escaped:
+                escaped = False
+            elif character == "\\":
+                escaped = True
+            elif character == _QUOTE_PAIRS[opening] or character == '"':
+                opening = None
+                character = '"'
+            repaired.append(character)
+        elif character in _QUOTE_PAIRS:
+            opening = character
+            repaired.append('"')
+        elif character in _LOOKALIKES:
+            repaired.append(_LOOKALIKES[character])
+        elif character in _SPACES:
+            repaired.append(" ")
+        elif character in _INVISIBLE:
+            continue
+        else:
+            repaired.append(character)
+    return "".join(repaired)
+
+
+def _load_pasted_config(text: str):
+    try:
+        return json.loads(text.strip() or "{}", parse_constant=_reject_constant)
+    except (ValueError, RecursionError):
+        pass
+    try:
+        return json.loads(_repair_pasted_json(text).strip() or "{}", parse_constant=_reject_constant)
+    except (ValueError, RecursionError):
+        raise BrowserActError("Custom parameters must be valid JSON.") from None
+
+
 def parse_config(raw) -> dict:
     if raw is None:
         raw = {}
     try:
         if isinstance(raw, str):
-            raw = json.loads(raw.strip() or "{}", parse_constant=_reject_constant)
+            raw = _load_pasted_config(raw)
         json.dumps(raw, allow_nan=False)
     except (ValueError, TypeError, RecursionError):
         raise BrowserActError("Custom parameters must be valid JSON.") from None

@@ -1,4 +1,4 @@
-﻿# BrowserAct for Dify
+# BrowserAct for Dify
 
 Run BrowserAct Bots and official templates from a Dify workflow, and wait for
 the result inside the node.
@@ -21,7 +21,7 @@ Both tools share the same connection, parameters and output shape.
 - Dify Community Edition or Dify Cloud.
 - A BrowserAct account with at least one published Bot, or access to official
   templates.
-- A BrowserAct API Key.
+- A BrowserAct API Key. Visit [the BrowserAct website](https://www.browseract.com/) to get your API Key.
 - Outbound HTTPS access to `api.browseract.com`. The host is fixed; the plugin
   does not accept a custom endpoint.
 
@@ -40,7 +40,7 @@ does not start a task.
 
 | Field | Description |
 | --- | --- |
-| **Operation** | `Run Bot` executes and waits for the result. `View Parameters` only reads the input definition. Defaults to `Run Bot`. |
+| **Operation** | `Run Bot` (Run My Bot) or `Run Template` (Run Official Template) executes and waits for the result. `View Parameters` only reads the input definition. Defaults to the run mode. |
 | **Bot** / **Template** | The target to run. The list loads from BrowserAct and can be searched by typing. |
 | **Wait Timeout (seconds)** | How long the node waits. Defaults to 600. Used only when running. |
 | **Custom Parameters JSON** | Input values for the Bot. Accepts a parameter object, `{}`, or the full output copied from `View Parameters`. |
@@ -50,7 +50,7 @@ does not start a task.
 1. Set **Operation** to `View Parameters` and run the node.
 2. Open **LAST RUN** and copy the full output.
 3. Paste it into **Custom Parameters JSON** and edit the values inside `json[0]`.
-4. Switch **Operation** back to `Run Bot`.
+4. Switch **Operation** back to `Run Bot` or `Run Template`.
 
 Objects merge recursively and arrays are replaced. Explicit `false`, `0` and
 empty strings are kept. Inputs are validated against the Bot's input schema
