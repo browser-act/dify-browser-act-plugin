@@ -61,8 +61,8 @@ parameters:
       en_US: Custom Parameters JSON
       zh_Hans: Custom Parameters JSON
     human_description:
-      en_US: Select a Bot or template, then choose View Parameters to inspect its inputs. For setup and usage instructions, see https://docs.browseract.com/integrations/integration-overview
-      zh_Hans: Select a Bot or template, then choose View Parameters to inspect its inputs. For setup and usage instructions, see https://docs.browseract.com/integrations/integration-overview
+      en_US: Select a Bot or template, then choose View Parameters to inspect its inputs. For setup and usage instructions, see https://docs.browseract.com/integrations/dify
+      zh_Hans: Select a Bot or template, then choose View Parameters to inspect its inputs. For setup and usage instructions, see https://docs.browseract.com/integrations/dify
     llm_description: A JSON string containing parameter overrides or the full Dify output from View Parameters.
 extra:
   python:

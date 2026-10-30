@@ -122,7 +122,7 @@ and writes nothing to disk. See [PRIVACY.md](PRIVACY.md) for the full data flow.
 
 ## Documentation
 
-- Integration overview: <https://docs.browseract.com/integrations/integration-overview>
+- Dify integration: <https://docs.browseract.com/integrations/dify>
 - API reference: <https://docs.browseract.com/workflow/api-reference>
 
 ## Source and support
