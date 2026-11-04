@@ -21,7 +21,7 @@ Both tools share the same connection, parameters and output shape.
 - Dify Community Edition or Dify Cloud.
 - A BrowserAct account with at least one published Bot, or access to official
   templates.
-- A BrowserAct API Key. Visit [the BrowserAct website](https://www.browseract.com/) to get your API Key.
+- A BrowserAct API Key. Visit [the BrowserAct website](https://www.browseract.com/?co-from=dify) to get your API Key.
 - Outbound HTTPS access to `api.browseract.com`. The host is fixed; the plugin
   does not accept a custom endpoint.
 
